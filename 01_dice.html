@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주사위 3개 게임</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f5f7ff, #e8ecff);
+    color: #20243a;
+  }
+
+  .game {
+    width: min(92vw, 620px);
+    padding: 34px 28px;
+    background: rgba(255,255,255,.94);
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(55,65,120,.18);
+    text-align: center;
+  }
+
+  h1 { margin: 0 0 8px; font-size: 34px; }
+  .subtitle { margin: 0 0 28px; color: #777d96; }
+
+  .dice-area {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin: 25px 0;
+    flex-wrap: wrap;
+  }
+
+  .die {
+    width: 115px;
+    height: 115px;
+    background: #fff;
+    border: 3px solid #e0e4f5;
+    border-radius: 22px;
+    display: grid;
+    place-items: center;
+    font-size: 72px;
+    line-height: 1;
+    box-shadow: 0 10px 20px rgba(50,60,100,.12);
+    user-select: none;
+  }
+
+  .die.rolling { animation: shake .13s infinite; }
+
+  @keyframes shake {
+    0% { transform: rotate(-7deg) translateY(0); }
+    50% { transform: rotate(7deg) translateY(-5px); }
+    100% { transform: rotate(-7deg) translateY(0); }
+  }
+
+  .score-box {
+    margin: 22px auto;
+    padding: 18px;
+    background: #f5f6ff;
+    border-radius: 18px;
+  }
+
+  .label { color: #777d96; font-size: 14px; }
+  .total { margin-top: 4px; font-size: 42px; font-weight: 800; }
+
+  button {
+    width: 100%;
+    max-width: 360px;
+    border: 0;
+    border-radius: 16px;
+    padding: 17px 24px;
+    font-size: 19px;
+    font-weight: 800;
+    color: white;
+    background: #5865f2;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(88,101,242,.28);
+    transition: transform .15s, opacity .15s;
+  }
+
+  button:hover { transform: translateY(-2px); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 24px;
+    color: #5f647a;
+  }
+
+  .stats strong {
+    display: block;
+    margin-top: 3px;
+    color: #20243a;
+    font-size: 20px;
+  }
+
+  .message {
+    min-height: 24px;
+    margin-top: 18px;
+    font-weight: 700;
+    color: #5865f2;
+  }
+
+  @media (max-width: 500px) {
+    .game { padding: 28px 18px; }
+    h1 { font-size: 28px; }
+    .die { width: 88px; height: 88px; font-size: 55px; }
+    .dice-area { gap: 10px; }
+  }
+</style>
+</head>
+
+<body>
+  <main class="game">
+    <h1>🎲 주사위 3개 게임</h1>
+    <p class="subtitle">주사위 3개를 굴려 가장 높은 점수를 만들어보세요!</p>
+
+    <section class="dice-area" aria-label="주사위">
+      <div class="die" id="die1">⚀</div>
+      <div class="die" id="die2">⚀</div>
+      <div class="die" id="die3">⚀</div>
+    </section>
+
+    <div class="score-box">
+      <div class="label">이번 점수</div>
+      <div class="total" id="total">3</div>
+    </div>
+
+    <button id="rollBtn">🎲 주사위 굴리기</button>
+
+    <div class="message" id="message">버튼을 눌러 시작하세요!</div>
+
+    <div class="stats">
+      <div>
+        <span>굴린 횟수</span>
+        <strong id="rollCount">0</strong>
+      </div>
+      <div>
+        <span>최고 점수</span>
+        <strong id="bestScore">0</strong>
+      </div>
+    </div>
+  </main>
+
+<script>
+  const dice = [
+    document.getElementById("die1"),
+    document.getElementById("die2"),
+    document.getElementById("die3")
+  ];
+
+  const totalEl = document.getElementById("total");
+  const rollBtn = document.getElementById("rollBtn");
+  const rollCountEl = document.getElementById("rollCount");
+  const bestScoreEl = document.getElementById("bestScore");
+  const messageEl = document.getElementById("message");
+
+  const faces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+  let rollCount = 0;
+  let bestScore = Number(localStorage.getItem("diceBestScore")) || 0;
+
+  bestScoreEl.textContent = bestScore;
+
+  function randomDice() {
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function rollDice() {
+    rollBtn.disabled = true;
+    messageEl.textContent = "주사위를 굴리는 중...";
+
+    dice.forEach(die => die.classList.add("rolling"));
+
+    // 굴리는 동안 숫자를 빠르게 변경해 애니메이션 효과
+    const interval = setInterval(() => {
+      dice.forEach(die => {
+        die.textContent = faces[randomDice() - 1];
+      });
+    }, 80);
+
+    await sleep(900);
+    clearInterval(interval);
+
+    const results = [randomDice(), randomDice(), randomDice()];
+    const total = results.reduce((sum, value) => sum + value, 0);
+
+    dice.forEach((die, index) => {
+      die.classList.remove("rolling");
+      die.textContent = faces[results[index] - 1];
+    });
+
+    totalEl.textContent = total;
+    rollCount++;
+    rollCountEl.textContent = rollCount;
+
+    if (total > bestScore) {
+      bestScore = total;
+      localStorage.setItem("diceBestScore", bestScore);
+      bestScoreEl.textContent = bestScore;
+      messageEl.textContent = "🎉 새로운 최고 점수!";
+    } else if (total === 18) {
+      messageEl.textContent = "🏆 JACKPOT! 18점!";
+    } else if (total >= 15) {
+      messageEl.textContent = "🔥 아주 높은 점수예요!";
+    } else if (total >= 10) {
+      messageEl.textContent = "👍 좋은 점수예요!";
+    } else {
+      messageEl.textContent = "다시 도전해보세요!";
+    }
+
+    rollBtn.disabled = false;
+  }
+
+  rollBtn.addEventListener("click", rollDice);
+</script>
+</body>
+</html>
