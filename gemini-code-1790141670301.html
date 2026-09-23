@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>귀여운 뱀 먹이 먹이기 게임</title>
+    <style>
+        body {
+            background-color: #f0f8ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        h1 {
+            color: #2e8b57;
+            margin-bottom: 10px;
+        }
+        #score-board {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        canvas {
+            border: 4px solid #2e8b57;
+            background-color: #e0f8e0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .instructions {
+            margin-top: 15px;
+            color: #555;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🐍 귀여운 뱀 게임</h1>
+    <div id="score-board">점수: <span id="score">0</span></div>
+    
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    
+    <div class="instructions">
+        방향키(←, →, ↑, ↓)를 눌러서 뱀을 조종하세요!<br>
+        빨간색 사과를 먹으면 뱀이 길어지고 점수가 올라갑니다.
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [
+            { x: 10, y: 10 },
+            { x: 9, y: 10 },
+            { x: 8, y: 10 }
+        ];
+        
+        let food = { x: 5, y: 5 };
+        let dx = 1;
+        let dy = 0;
+        let score = 0;
+        let changingDirection = false;
+        let gameInterval;
+
+        // 키보드 입력 처리
+        document.addEventListener("keydown", changeDirection);
+
+        function main() {
+            if (hasGameEnded()) {
+                alert(`게임 오버! 😢 최종 점수: ${score}점`);
+                resetGame();
+                return;
+            }
+
+            changingDirection = false;
+            clearCanvas();
+            drawFood();
+            moveSnake();
+            drawSnake();
+        }
+
+        // 게임 시작
+        gameInterval = setInterval(main, 100);
+
+        function clearCanvas() {
+            ctx.fillStyle = "#e0f8e0";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawSnake() {
+            snake.forEach((part, index) => {
+                // 머리는 초록색, 몸통은 연두색으로 귀엽게 표현
+                ctx.fillStyle = index === 0 ? "#2e8b57" : "#3cb371";
+                ctx.strokeStyle = "#ffffff";
+                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+                ctx.strokeRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+            });
+        }
+
+        function moveSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            // 먹이를 먹었는지 확인
+            const hasEatenFood = snake[0].x === food.x && snake[0].y === food.y;
+            if (hasEatenFood) {
+                score += 10;
+                document.getElementById("score").innerText = score;
+                generateFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function generateFood() {
+            food.x = Math.floor(Math.random() * tileCount);
+            food.y = Math.floor(Math.random() * tileCount);
+
+            // 먹이가 뱀 몸 위에 생기지 않도록 재배치
+            snake.forEach(part => {
+                const hasEaten = part.x === food.x && part.y === food.y;
+                if (hasEaten) generateFood();
+            });
+        }
+
+        function drawFood() {
+            ctx.fillStyle = "#ff4500"; // 빨간색 사과
+            ctx.beginPath();
+            let x = food.x * gridSize + gridSize / 2;
+            let y = food.y * gridSize + gridSize / 2;
+            ctx.arc(x, y, gridSize / 2 - 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function changeDirection(event) {
+            const keyPressed = event.keyCode;
+            const LEFT = 37;
+            const UP = 38;
+            const RIGHT = 39;
+            const DOWN = 40;
+
+            if (changingDirection) return;
+            changingDirection = true;
+
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingRight = dx === 1;
+            const goingLeft = dx === -1;
+
+            if (keyPressed === LEFT && !goingRight) {
+                dx = -1;
+                dy = 0;
+            }
+            if (keyPressed === UP && !goingDown) {
+                dx = 0;
+                dy = -1;
+            }
+            if (keyPressed === RIGHT && !goingLeft) {
+                dx = 1;
+                dy = 0;
+            }
+            if (keyPressed === DOWN && !goingUp) {
+                dx = 0;
+                dy = 1;
+            }
+        }
+
+        function hasGameEnded() {
+            // 벽에 부딪혔는지 확인
+            const hitLeftWall = snake[0].x < 0;
+            const hitRightWall = snake[0].x >= tileCount;
+            const hitToptWall = snake[0].y < 0;
+            const hitBottomWall = snake[0].y >= tileCount;
+
+            if (hitLeftWall || hitRightWall || hitToptWall || hitBottomWall) {
+                return true;
+            }
+
+            // 자기 몸에 부딪혔는지 확인
+            for (let i = 4; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+            }
+            
+            return false;
+        }
+
+        function resetGame() {
+            snake = [
+                { x: 10, y: 10 },
+                { x: 9, y: 10 },
+                { x: 8, y: 10 }
+            ];
+            score = 0;
+            document.getElementById("score").innerText = score;
+            dx = 1;
+            dy = 0;
+            generateFood();
+            gameInterval = setInterval(main, 100);
+        }
+    </script>
+</body>
+</html>
