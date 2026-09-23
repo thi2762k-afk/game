@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>윤진이의 미니게임 아케이드</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --primary: #4a90e2;
+            --secondary: #50e3c2;
+            --border-color: #ddd;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .game-box {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #357abd;
+        }
+        input, select {
+            padding: 6px;
+            margin-top: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: 80%;
+        }
+        .result-text {
+            font-weight: bold;
+            color: #e67e22;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎮 윤진이의 미니게임 아케이드</h1>
+        <p>웹 브라우저에서 가볍게 즐길 수 있는 미니게임 6가지!</p>
+    </header>
+
+    <div class="container">
+        <!-- 1. 끝말잇기 도우미 -->
+        <div class="card">
+            <h3>1. 단어 연상 끝말잇기</h3>
+            <p>제시된 단어로 시작하는 말을 생각해보세요!</p>
+            <div class="game-box">
+                <span id="word-prompt">제시어: <b>사과</b></span>
+                <input type="text" id="word-input" placeholder="다음 단어 입력">
+                <button onclick="checkWord()">입력하기</button>
+            </div>
+            <div id="word-result" class="result-text"></div>
+        </div>
+
+        <!-- 2. 초성 퀴즈 -->
+        <div class="card">
+            <h3>2. 랜덤 초성 퀴즈</h3>
+            <p>초성만 보고 단어를 유추해 보세요!</p>
+            <div class="game-box">
+                <span id="chosung-display" style="font-size: 20px; font-weight: bold;">단어 글자수: 2글자</span>
+                <button onclick="nextChosung()">새로운 문제</button>
+            </div>
+            <div id="chosung-hint" class="result-text">힌트: 빨갛고 아삭한 과일 (사과)</div>
+        </div>
+
+        <!-- 3. 랜덤 빙고 생성기 -->
+        <div class="card">
+            <h3>3. 미니 3x3 빙고 판 만들기</h3>
+            <p>버튼을 눌러 나만의 무작위 번호판을 만드세요!</p>
+            <div class="game-box">
+                <div id="bingo-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 100%;">
+                    <!-- 동적 생성 -->
+                </div>
+                <button onclick="generateBingo()">빙고판 섞기</button>
+            </div>
+        </div>
+
+        <!-- 4. 20고개 시뮬레이터 -->
+        <div class="card">
+            <h3>4. 20고개 (단어 맞추기)</h3>
+            <p>AI가 숨긴 단어를 예/아니오 질문으로 맞춰보세요.</p>
+            <div class="game-box">
+                <span id="twenty-status">단어가 숨겨졌습니다! 질문을 던져보세요.</span>
+                <input type="text" id="twenty-input" placeholder="예: 살아있나요?">
+                <button onclick="askTwenty()">질문하기</button>
+            </div>
+            <div id="twenty-result" class="result-text"></div>
+        </div>
+
+        <!-- 5. 명대사 뽑기 -->
+        <div class="card">
+            <h3>5. 명대사 뽑기</h3>
+            <p>랜덤 영화/드라마 명대사를 확인해보세요!</p>
+            <div class="game-box">
+                <span id="quote-display">"어이가 없네?"</span>
+                <button onclick="nextQuote()">다른 대사 보기</button>
+            </div>
+        </div>
+
+        <!-- 6. 훈민정음 금지어 뽑기 -->
+        <div class="card">
+            <h3>6. 금지 자음 뽑기</h3>
+            <p>오늘의 대화 중 절대 쓰면 안 되는 금지 자음!</p>
+            <div class="game-box">
+                <span id="forbidden-display" style="font-size: 24px; color: #e74c3c; font-weight: bold;">(아직 뽑지 않음)</span>
+                <button onclick="pickForbidden()">금지 자음 뽑기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLastWord = "사과";
+        function checkWord() {
+            const input = document.getElementById('word-input');
+            const result = document.getElementById('word-result');
+            const val = input.value.trim();
+            if (val.length < 2) {
+                result.innerText = "두 글자 이상 입력해주세요!";
+                return;
+            }
+            if (val[0] !== currentLastWord[currentLastWord.length - 1]) {
+                result.innerText = `'${currentLastWord[currentLastWord.length - 1]}'로 시작해야 해요!`;
+                return;
+            }
+            currentLastWord = val;
+            result.innerText = `성공! 다음 글자는 '${val[val.length - 1]}'입니다.`;
+            document.getElementById('word-prompt').innerHTML = `제시어: <b>${val}</b>`;
+            input.value = "";
+        }
+
+        const chosungList = [
+            { ch: "사과", hint: "빨갛고 아삭한 과일" },
+            { ch: "컴퓨터", hint: "책상 위에 있는 전자기기" },
+            { ch: "바나나", hint: "노랗고 길쭉한 과일" },
+            { ch: "강아지", hint: "사람을 잘 따르는 반려동물" },
+            { ch: "떡볶이", hint: "매콤달콤한 분식 메뉴" }
+        ];
+        function nextChosung() {
+            const random = chosungList[Math.floor(Math.random() * chosungList.length)];
+            document.getElementById('chosung-display').innerText = `단어 글자수: ${random.ch.length}글자`;
+            document.getElementById('chosung-hint').innerText = `힌트: ${random.hint} (${random.ch})`;
+        }
+
+        function generateBingo() {
+            const board = document.getElementById('bingo-board');
+            board.innerHTML = "";
+            let numbers = Array.from({length: 9}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            numbers.forEach(num => {
+                const cell = document.createElement('div');
+                cell.innerText = num;
+                cell.style.background = "#fff";
+                cell.style.border = "1px solid #ccc";
+                cell.style.padding = "8px";
+                cell.style.cursor = "pointer";
+                cell.onclick = () => cell.style.background = cell.style.background === "rgb(80, 227, 194)" ? "#fff" : "#50e3c2";
+                board.appendChild(cell);
+            });
+        }
+        generateBingo();
+
+        function askTwenty() {
+            const input = document.getElementById('twenty-input');
+            const result = document.getElementById('twenty-result');
+            const val = input.value.trim();
+            if(!val) return;
+            
+            if(val.includes("전자기기") || val.includes("물건") || val.includes("화면")) {
+                result.innerText = "답변: 네! 그렇습니다.";
+            } else if(val.includes("동물") || val.includes("사람")) {
+                result.innerText = "답변: 아니오, 아닙니다.";
+            } else {
+                result.innerText = "답변: 애매하거나 잘 모르겠어요!";
+            }
+            input.value = "";
+        }
+
+        const quotes = [
+            "어이가 없네? - 영화 베테랑",
+            "내 아이가 네 아이니? - 영화 범죄도시",
+            "이 중에서 살아남는 자가 강한 게 아니라, 강한 자가 살아남는 거야. - 영화 신세계",
+            "라면 먹고 갈래요? - 영화 봄날은 간다"
+        ];
+        function nextQuote() {
+            const rand = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('quote-display').innerText = rand;
+        }
+
+        const consonants = ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ'];
+        function pickForbidden() {
+            const rand = consonants[Math.floor(Math.random() * consonants.length)];
+            document.getElementById('forbidden-display').innerText = `금지 자음: [ ${rand} ]`;
+        }
+    </script>
+</body>
+</html>
